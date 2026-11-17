@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import ScreenContainer from '../../components/ScreenContainer';
 import CustomHeader from '../../components/CustomHeader';
@@ -14,7 +14,7 @@ export default function Activity4NetworkDiagnosticScreen() {
   const [result, setResult] = useState<NetworkDiagnosticResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const runTest = async () => {
+  const runTest = useCallback(async () => {
     if (stage === 'idlePing' || stage === 'download' || stage === 'upload') return;
     setError(null);
     setResult(null);
@@ -42,9 +42,17 @@ export default function Activity4NetworkDiagnosticScreen() {
       setError(e?.message || 'Diagnostic failed');
       setStage('failed');
     }
-  };
+  }, [stage]);
 
-  useEffect(() => { runTest(); }, []);
+  const runTestRef = useRef(runTest);
+  useEffect(() => {
+    runTestRef.current = runTest;
+  }, [runTest]);
+
+  useEffect(() => {
+    const initial = setTimeout(() => { void runTestRef.current(); }, 0);
+    return () => clearTimeout(initial);
+  }, []);
 
   const tier = useMemo(() => (result ? classifyNetworkHealth(result) : NetworkHealthTier.Fair), [result]);
   const tierColor = tier === NetworkHealthTier.Excellent ? '#4CAF50' : tier === NetworkHealthTier.Fair ? '#FFB74D' : tier === NetworkHealthTier.Poor ? '#EF6C00' : '#E53935';

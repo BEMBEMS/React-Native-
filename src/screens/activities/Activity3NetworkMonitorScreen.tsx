@@ -32,9 +32,12 @@ export default function Activity3NetworkMonitorScreen() {
   };
 
   useEffect(() => {
-    ping();
-    const id = setInterval(ping, 5000);
-    return () => clearInterval(id);
+    const initial = setTimeout(() => { void ping(); }, 0);
+    const id = setInterval(() => { void ping(); }, 5000);
+    return () => {
+      clearTimeout(initial);
+      clearInterval(id);
+    };
   }, []);
 
   useEffect(() => {

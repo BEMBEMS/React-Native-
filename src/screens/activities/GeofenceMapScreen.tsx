@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Modal, Alert, Image } from 'react-native';
-import MapView, { Circle, Marker, UrlTile, Region, MapPressEvent } from 'react-native-maps';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import ScreenContainer from '../../components/ScreenContainer';
+import GeofenceMapView from '../../components/GeofenceMapView';
 import CustomHeader from '../../components/CustomHeader';
 import { useTheme } from '../../context/ThemeContext';
 import { DelMonteMapConfig, distanceInMeters, GeofenceLocation, LatLng, maxGeofenceLocations } from '../../utils/geofence';
@@ -12,22 +12,12 @@ const STORAGE_KEY = 'geofence_locations_v1';
 
 type GeofenceEvent = { id: string; landmark: GeofenceLocation; entered: boolean; time: Date };
 
-const COLOR_OPTIONS: { name: string; value: string }[] = [
-  { name: 'Blue', value: '#2196F3' },
-  { name: 'Red', value: '#E53935' },
-  { name: 'Green', value: '#43A047' },
-  { name: 'Orange', value: '#FB8C00' },
-  { name: 'Purple', value: '#8E24AA' },
-  { name: 'Yellow', value: '#FDD835' },
-  { name: 'Pink', value: '#D81B60' },
-];
-
 export default function GeofenceMapScreen() {
   const { theme } = useTheme();
   const [landmarks, setLandmarks] = useState<GeofenceLocation[]>([]);
   const [userLocation, setUserLocation] = useState<LatLng>(DelMonteMapConfig.defaultUserLocation);
-  const [radiusColor, setRadiusColor] = useState<string>('#2196F3');
-  const [markerColor, setMarkerColor] = useState<string>('#2196F3');
+  const radiusColor = '#2196F3';
+  const markerColor = '#2196F3';
   const [insideIds, setInsideIds] = useState<Set<string>>(new Set());
   const [events, setEvents] = useState<GeofenceEvent[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -36,7 +26,7 @@ export default function GeofenceMapScreen() {
   const walkRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const walkIdx = useRef(0);
   const prevInside = useRef<Set<string>>(new Set());
-  const initialRegion: Region = {
+  const initialRegion = {
     latitude: DelMonteMapConfig.center.latitude,
     longitude: DelMonteMapConfig.center.longitude,
     latitudeDelta: 0.012,
@@ -170,58 +160,15 @@ export default function GeofenceMapScreen() {
         </View>
 
         <View style={[styles.mapContainer, { borderColor: theme.colors.border }]}>
-          <MapView
-            style={styles.map}
+          <GeofenceMapView
             initialRegion={initialRegion}
-            scrollEnabled
-            zoomEnabled
-            rotateEnabled
-            pitchEnabled
-            onPress={(e: MapPressEvent) => {
-              const { latitude, longitude } = e.nativeEvent.coordinate;
-              setUserLocation({ latitude, longitude });
-            }}
-          >
-            <UrlTile
-              urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-              maximumZ={19}
-              flipY={false}
-              zIndex={-1}
-            />
-            {landmarks.map((l) => (
-              <Circle
-                key={`c-${l.id}`}
-                center={{ latitude: l.position.latitude, longitude: l.position.longitude }}
-                radius={l.radiusMeters}
-                strokeColor={l.color}
-                fillColor={`${l.color}33`}
-                strokeWidth={2}
-              />
-            ))}
-            {landmarks.map((l) => (
-              <Marker
-                key={l.id}
-                coordinate={{ latitude: l.position.latitude, longitude: l.position.longitude }}
-                title={l.name}
-                description={l.category}
-                pinColor={l.color}
-                onPress={() => openEdit(l)}
-              />
-            ))}
-            <Circle
-              center={{ latitude: userLocation.latitude, longitude: userLocation.longitude }}
-              radius={60}
-              strokeColor={radiusColor}
-              fillColor={`${radiusColor}33`}
-              strokeWidth={2}
-            />
-            <Marker
-              coordinate={{ latitude: userLocation.latitude, longitude: userLocation.longitude }}
-              title="Selected location"
-              description="Tap anywhere on the map to move this marker"
-              pinColor={markerColor}
-            />
-          </MapView>
+            landmarks={landmarks}
+            userLocation={userLocation}
+            radiusColor={radiusColor}
+            markerColor={markerColor}
+            onPressCoordinate={(coordinate) => setUserLocation(coordinate)}
+            onMarkerPress={(l) => openEdit(l)}
+          />
         </View>
         <View style={styles.actionsRow}>
           <Action label={walking ? 'Stop Walk' : 'Simulate Walk'} onPress={toggleWalk} theme={theme} filled={walking} />
@@ -320,7 +267,6 @@ const styles = StyleSheet.create({
   statusCard: { borderWidth: 1, borderRadius: 16, padding: 14, marginBottom: 12 },
   statusTitle: { fontSize: 16, fontWeight: '700' },
   mapContainer: { height: 340, borderWidth: 1, borderRadius: 16, overflow: 'hidden', marginBottom: 10 },
-  map: { flex: 1 },
   actionsRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
   action: { flex: 1, borderWidth: 1, borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
   card: { borderWidth: 1, borderRadius: 16, padding: 14, marginBottom: 12 },

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList } from 'react-native';
 import ScreenContainer from '../../components/ScreenContainer';
 import CustomHeader from '../../components/CustomHeader';

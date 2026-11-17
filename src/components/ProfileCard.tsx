@@ -9,14 +9,18 @@ type Props = {
   email: string;
 };
 
-export default function ProfileCard({ name, studentId, course, email }: Props) {
+function Row({ label, value }: { label: string; value: string }) {
   const { theme } = useTheme();
-  const Row = ({ label, value }: { label: string; value: string }) => (
+  return (
     <View style={styles.row}>
       <Text style={[styles.label, { color: theme.colors.textSecondary }]}>{label}</Text>
       <Text style={[styles.value, { color: theme.colors.text }]}>{value}</Text>
     </View>
   );
+}
+
+export default function ProfileCard({ name, studentId, course, email }: Props) {
+  const { theme } = useTheme();
 
   return (
     <View style={[styles.card, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>

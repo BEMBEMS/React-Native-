@@ -1,4 +1,4 @@
-﻿export enum NetworkHealthTier {
+export enum NetworkHealthTier {
   Excellent = 'Excellent',
   Fair = 'Fair',
   Poor = 'Poor',
